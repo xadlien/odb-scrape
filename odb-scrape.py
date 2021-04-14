@@ -2,6 +2,7 @@ import argparse
 from collections import namedtuple
 import datetime
 import json
+import psycopg2
 import requests
 import sys
 
@@ -14,6 +15,7 @@ def main():
     parser.add_argument("--start", required=True, help="date start in yyyy-mm-dd format")
     parser.add_argument("--end", required=True, help="date inclusive end in yyyy-mm-dd format")
     parser.add_argument("-f", "--file", required=False, help="json file to create with scraped data")
+    parser.add_argument("-p", "--postgres", required=False, help="push to postgres using provided config file")
 
     #parse arguments
     args = parser.parse_args()
@@ -25,9 +27,50 @@ def main():
         f = sys.stdout
 
     #call generator to get json data and print/write to file
-    for dv in get_devotionals(args.start, args.end):
+    devos = get_devotionals(args.start, args.end)
+    for dv in devos:
         f.write(json.dumps(dv))
 
+    if args.postgres:
+        config = json.load(open(args.postgres, 'r'))
+        # get postgres config
+        pg_host = config["host"]
+        pg_port = config["port"]
+        pg_user = config["username"]
+        pg_pass = config["password"]
+        pg_db = config["database"]
+
+        # connect to postgres
+        conn = psycopg2.connect(
+            host=pg_host,
+            port=pg_port,
+            database=pg_db,
+            user=pg_user,
+            password=pg_pass
+        )
+        cur = conn.cursor()
+
+        # ensure table exists
+        query = "create table if not exists devotionals (" + \
+            "id int constraint firstkey primary key," +\
+            "title varchar," + \
+            "content varchar);"
+        cur.execute(query)
+        conn.commit()
+
+        # iterate and generate records
+        for dv in devos:
+            id = dv['id']
+            title = dv['title']['rendered']
+            content = dv['content']['rendered']
+            query = f"select count(*) from devotionals where id = {id};"
+            cur.execute(query)
+            check_val = cur.fetchall()[0][0]
+            # insert value if it doesn't exist
+            if check_val == 0:
+                query = f"insert into devotionals values ({id},'{title}','{content}');"
+                cur.execute(query) 
+                conn.commit()
 
 def get_devotionals(start_date, end_date):
     
