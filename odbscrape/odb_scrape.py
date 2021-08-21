@@ -91,8 +91,8 @@ def get_devotionals(start_date, end_date):
     #return data
     return r.json()
 
-
-main()
+if __name__ == "__main__":
+    main()
 
 #headers = {'Accept': 'application/json', 'Referer': 'https://odb.org/2020/02/08'}
 #url = "https://odb.org/wp-json/wp/v2/posts?after=2020-02-07T23:59:59.000Z&before=2020-02-09T00:00:00.000Z"
