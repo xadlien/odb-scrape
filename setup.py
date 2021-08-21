@@ -7,7 +7,7 @@ setup(name='odb-scrape',
       author='Daniel Martin',
       author_email='djm24862@gmail.com',
       packages=['odbscrape'],
-      install_requires=['psycopg2'],
+      install_requires=['psycopg2', 'requests'],
       entry_points = {
           'console_scripts': ['odb-scrape=odbscrape.odb_scrape:main']
       },
