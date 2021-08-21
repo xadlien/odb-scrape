@@ -13,4 +13,4 @@ clean:
 	rm -r *.egg-info *.tar.gz *dist* venv
 
 install-deb:
-	sudo dpkg -i deb_dist/*.deb
+	sudo apt install -f ./deb_dist/*.deb
